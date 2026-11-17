@@ -28,15 +28,21 @@ type GraphError struct{ Kind, Detail string }
 
 func (e *GraphError) Error() string { return e.Kind + ": " + e.Detail }
 
-// expand resolves a dependency name to node indexes: jobs named d or starting "d (".
-func expand(names []string, d string) []int {
-	var out []int
+// index maps a dependency name to the node indexes it matches: a job named exactly d, or whose
+// name starts with "d (". Built once per run so lookups do not rescan every job.
+type index map[string][]int
+
+func newIndex(names []string) index {
+	ix := index{}
 	for i, n := range names {
-		if n == d || strings.HasPrefix(n, d+" (") {
-			out = append(out, i)
+		ix[n] = append(ix[n], i)
+		for p := 0; p < len(n); p++ {
+			if n[p] == ' ' && p+1 < len(n) && n[p+1] == '(' && p > 0 {
+				ix[n[:p]] = append(ix[n[:p]], i)
+			}
 		}
 	}
-	return out
+	return ix
 }
 
 // lookupDeps returns the declared dependencies for a job: exact name first, then the name
@@ -65,18 +71,14 @@ func LongestPath(nodes []Node, needs map[string][]string, maxEdges int) ([]strin
 		names[i] = nd.Name
 	}
 	deps := make([][]int, n)
-	cache := map[string][]int{} // each distinct dependency name is resolved once
+	ix := newIndex(names)
 	edges := 0
 	for i, nd := range nodes {
 		for _, d := range lookupDeps(needs, nd.Name) {
 			if d == nd.Name {
 				return nil, 0, &GraphError{KindUnknownDep, fmt.Sprintf("job %q needs itself", nd.Name)}
 			}
-			targets, seen := cache[d]
-			if !seen {
-				targets = expand(names, d)
-				cache[d] = targets
-			}
+			targets := ix[d]
 			if len(targets) == 0 {
 				return nil, 0, &GraphError{KindUnknownDep, fmt.Sprintf("job %q needs %q, which matches no job in this run", nd.Name, d)}
 			}

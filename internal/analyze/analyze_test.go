@@ -402,3 +402,51 @@ func TestAnalyzeSampleGolden(t *testing.T) {
 		t.Errorf("golden mismatch\n--- got\n%s\n--- want\n%s", got, want)
 	}
 }
+
+func TestRenamedWorkflowUsesEachRunsOwnNeeds(t *testing.T) {
+	old := runSpec{id: 1, created: t0, jobs: []jb{job("a", 0, 10), job("b", 10, 20)}}
+	cur := runSpec{id: 2, created: t0.Add(time.Hour), jobs: []jb{job("a", 0, 10), job("b", 0, 20)}}
+	ds := build(old, cur)
+	ds.Attempts[0].Run.Path = "old.yml"
+	ds.Attempts[1].Run.Path = "new.yml"
+	ds.Needs = map[string]map[string][]string{
+		"old.yml": {"b": {"a"}},
+		"new.yml": {}, // b no longer needs a
+	}
+	w, r := one(t, ds, Options{})
+	if len(r.Errors) != 0 || !w.CriticalPath.Available || w.CriticalPath.Duration != 20*time.Second {
+		t.Fatalf("%+v %v", w.CriticalPath, r.Errors)
+	}
+	if w.CriticalPath.OnPathRuns["a"] != 1 || w.CriticalPath.OnPathRuns["b"] != 2 {
+		t.Errorf("on path %v", w.CriticalPath.OnPathRuns)
+	}
+	delete(ds.Needs, "old.yml")
+	w, r = one(t, ds, Options{})
+	if w.CriticalPath.Available || !strings.Contains(w.CriticalPath.Reason, "old.yml") || len(r.Errors) != 0 {
+		t.Errorf("missing sidecar for one run: %+v %v", w.CriticalPath, r.Errors)
+	}
+}
+
+func TestQueueAndStepOverflowReachErrors(t *testing.T) {
+	// 1,800 runs whose job waited 60 days: the queue total passes MaxInt64 nanoseconds while
+	// every run time and step stays tiny and valid.
+	const runs = 1800
+	var specs []runSpec
+	for i := 0; i < runs; i++ {
+		c := t0.Add(time.Duration(i) * time.Minute)
+		j := job("a", 0, 1)
+		j.created, j.createdSet = -60*24*3600, true // created 60 days before it started
+		j.steps = [][3]any{{"s", 0, 1}}
+		specs = append(specs, runSpec{id: int64(i + 1), created: c, jobs: []jb{j}})
+	}
+	_, r := one(t, build(specs...), Options{Window: runs})
+	found := false
+	for _, e := range r.Errors {
+		if e.Kind == KindOverflow && strings.Contains(e.Detail, "queue time total overflows for job") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("errors: %+v", r.Errors)
+	}
+}

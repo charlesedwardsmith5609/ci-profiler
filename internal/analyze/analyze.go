@@ -335,7 +335,11 @@ func analyzeWorkflow(ds *model.Dataset, wk string, keys []runKey, groups map[run
 	var grand time.Duration
 	var grandOver bool
 	for name, d := range runD {
-		w.Jobs = append(w.Jobs, JobStat{Name: name, Run: Summarize(d), Queue: Summarize(queueD[name]), NegativeQueue: negQ[name]})
+		js := JobStat{Name: name, Run: Summarize(d), Queue: Summarize(queueD[name]), NegativeQueue: negQ[name]}
+		if js.Queue.Overflow {
+			addErr(KindOverflow, fmt.Sprintf("queue time total overflows for job %q", name))
+		}
+		w.Jobs = append(w.Jobs, js)
 	}
 	sort.Slice(w.Jobs, func(i, j int) bool { return w.Jobs[i].Name < w.Jobs[j].Name })
 	for _, j := range w.Jobs {
@@ -352,7 +356,11 @@ func analyzeWorkflow(ds *model.Dataset, wk string, keys []runKey, groups map[run
 		}
 	}
 	for k, d := range stepD {
-		w.Steps = append(w.Steps, StepStat{Job: k.job, Name: k.step, Run: Summarize(d)})
+		ss := StepStat{Job: k.job, Name: k.step, Run: Summarize(d)}
+		if ss.Run.Overflow { // checked before TopSteps trims the list
+			addErr(KindOverflow, fmt.Sprintf("step time total overflows for %q / %q", k.job, k.step))
+		}
+		w.Steps = append(w.Steps, ss)
 	}
 	sort.Slice(w.Steps, func(i, j int) bool {
 		a, b := w.Steps[i], w.Steps[j]
@@ -405,12 +413,16 @@ func criticalPaths(ds *model.Dataset, w *Workflow, timed []timedRun, opts Option
 		cp.Reason = "no timed runs in the window"
 		return cp
 	}
-	needs, ok := ds.Needs[w.Path]
-	if !ok {
-		cp.Reason = fmt.Sprintf("no needs data for %q (supply needs.json); path is never inferred from timestamps", w.Path)
-		return cp
+	// Each run is checked against the needs of its own workflow file path, so a renamed or
+	// changed workflow does not apply today's graph to older runs.
+	for _, t := range timed {
+		if _, ok := ds.Needs[t.att.Run.Path]; !ok {
+			cp.Reason = fmt.Sprintf("no needs data for %q (supply needs.json); path is never inferred from timestamps", t.att.Run.Path)
+			return cp
+		}
 	}
 	for i, t := range timed {
+		needs := ds.Needs[t.att.Run.Path]
 		nodes := make([]Node, 0, len(t.jobs))
 		for _, j := range t.jobs {
 			nodes = append(nodes, Node{j.name, j.run})

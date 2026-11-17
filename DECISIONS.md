@@ -31,3 +31,7 @@
 - D24: Structured Result.Errors separate from unavailable reasons (cycle is an error, missing sidecar is not).
 - D25: Dominant step is path-relative, default 25% of critical path. Threshold is my choice; human may change.
 - D26: All-skipped runs excluded; zero denominators guarded.
+- D27: Cross-review (phase 3) #1: needs graph uses a per-run name/prefix index instead of rescanning jobs. Agreed.
+- D28: #2: needs looked up per run by that run's own workflow path; any run lacking a sidecar makes the path unavailable (not an error). Agreed.
+- D29: #3: job queue and step overflow now reach Result.Errors (checked before TopSteps trims). Agreed. Queue overflow has an Analyze-level test; the step overflow check shares the same code shape but has no dedicated test.
+- D30: YAML-based flags (no timeout, no concurrency cancellation) deferred out of phase 3; needs a decision on a hand-written scanner.

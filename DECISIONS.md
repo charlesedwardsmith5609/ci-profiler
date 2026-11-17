@@ -11,3 +11,6 @@
 - D6: Matrix dependency expansion by name prefix; unknown/ambiguous = error. Review #5.
 - D7: Use `os.Root` and stream-level caps. Review #6.
 - D8: Plan review ran with gitleaks missing (no secret scan); plan contained no secrets.
+- D9: Cross-review #1: open files with O_NONBLOCK and require a regular file on the opened
+  handle (FIFO hang). Agreed; Unix-only.
+- D10: Cross-review #2: duplicate job names in an attempt are an error. Agreed.

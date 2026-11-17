@@ -18,6 +18,8 @@ only. Never calls an API, never handles a token, never executes input.
 
 ## 2. Needs graph
 - Node identity: the job `name` as the API reports it. Matrix jobs appear as `build (linux, 1.22)`.
+- Duplicate job names within one attempt are an error (two jobs both named `test` cannot be
+  told apart by this tool), naming the name.
 - A sidecar dependency `build` expands to every job named `build` or starting with `build (`.
 - An unknown dependency, or a job that is its own dependency, is an error naming the job.
 - A cycle is detected by DFS with colors (no recursion deeper than the node cap; node cap 10,000
@@ -69,6 +71,10 @@ only. Never calls an API, never handles a token, never executes input.
   `..` cannot escape even if the tree changes during the run.
 - Caps: 10 MiB per file, 200 MiB total, 5,000 files, enforced with a limited reader on the opened
   stream, not file metadata. JSON nesting and step/job counts are capped.
+- Only regular files are read. Each file is opened through the root with `O_NONBLOCK` (so a FIFO
+  with no writer cannot hang the open), then `Stat` on the opened handle must report a regular
+  file, otherwise it is an error. Directory walking skips nothing silently: a non-regular entry
+  is an error naming the path. `O_NONBLOCK` is Unix-only; Windows support is a non-goal.
 - Strict decoding, unknown fields ignored, errors name the file. No panics on bad input (fuzzed).
 - No exec, no network, no writes except stdout/stderr.
 

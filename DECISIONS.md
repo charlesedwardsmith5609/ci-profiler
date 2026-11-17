@@ -16,3 +16,8 @@
 - D10: Cross-review #2: duplicate job names in an attempt are an error. Agreed.
 - D11: Layout checked against a synthetic sample in testdata/sample (not real data). A real
   capture is still needed to confirm field shapes.
+- D12: Bounded directory enumeration, ignored entries count toward the cap. Plan review (step 2).
+- D13: Reads bounded by remaining total budget; stop on cap error.
+- D14: Run keeps workflow_id; WorkflowKey falls back to path.
+- D15: Empty jobs response is an input error; no filename-based linkage.
+- D16: go.mod bumped 1.26.8 -> 1.26.9 (approved) for GO-2026-6604 (os.Root, Windows only, reachable via Root.OpenFile/Lstat). No module requirements added.

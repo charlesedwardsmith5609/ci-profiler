@@ -1,0 +1,32 @@
+run 101 attempt 1 wf=id:5001 completed/failure jobs=true file=runs/101-1.json
+  job "lint" success start=2026-11-02T09:00:12Z end=2026-11-02T09:01:11Z steps=2
+  job "build (linux)" success start=2026-11-02T09:00:08Z end=2026-11-02T09:02:32Z steps=2
+  job "build (macos)" success start=2026-11-02T09:01:35Z end=2026-11-02T09:05:11Z steps=2
+  job "test" failure start=2026-11-02T09:05:17Z end=2026-11-02T09:10:21Z steps=2
+run 101 attempt 2 wf=id:5001 completed/success jobs=true file=runs/101-2.json
+  job "lint" success start=2026-11-02T09:14:12Z end=2026-11-02T09:15:11Z steps=2
+  job "build (linux)" success start=2026-11-02T09:14:08Z end=2026-11-02T09:16:32Z steps=2
+  job "build (macos)" success start=2026-11-02T09:15:35Z end=2026-11-02T09:19:11Z steps=2
+  job "test" success start=2026-11-02T09:19:17Z end=2026-11-02T09:24:11Z steps=2
+  job "deploy" success start=2026-11-02T09:24:16Z end=2026-11-02T09:25:29Z steps=2
+run 102 attempt 1 wf=id:5001 completed/cancelled jobs=true file=runs/102-1.json
+  job "lint" success start=2026-11-02T11:00:12Z end=2026-11-02T11:01:11Z steps=2
+  job "build (linux)" success start=2026-11-02T11:00:08Z end=2026-11-02T11:02:32Z steps=2
+  job "build (macos)" success start=2026-11-02T11:01:35Z end=2026-11-02T11:05:11Z steps=2
+  job "test" cancelled start=2026-11-02T11:05:17Z end=2026-11-02T11:10:26Z steps=2
+run 103 attempt 1 wf=id:5001 completed/success jobs=true file=runs/103-1.json
+  job "lint" success start=2026-11-02T11:06:12Z end=2026-11-02T11:07:11Z steps=2
+  job "build (linux)" success start=2026-11-02T11:06:08Z end=2026-11-02T11:08:32Z steps=2
+  job "build (macos)" success start=2026-11-02T11:07:35Z end=2026-11-02T11:11:11Z steps=2
+  job "test" success start=2026-11-02T11:11:17Z end=2026-11-02T11:16:16Z steps=2
+  job "deploy" success start=2026-11-02T11:16:21Z end=2026-11-02T11:17:34Z steps=2
+run 104 attempt 1 wf=id:5001 completed/success jobs=true file=runs/104-1.json
+  job "lint" success start=2026-11-03T09:00:12Z end=2026-11-03T09:01:11Z steps=2
+  job "build (linux)" success start=2026-11-03T09:00:08Z end=2026-11-03T09:02:32Z steps=2
+  job "build (macos)" success start=2026-11-03T09:01:35Z end=2026-11-03T09:05:11Z steps=2
+  job "test" success start=2026-11-03T09:05:17Z end=2026-11-03T09:12:21Z steps=2
+  job "deploy" success start=2026-11-03T09:12:26Z end=2026-11-03T09:13:39Z steps=2
+needs .github/workflows/ci.yml build -> []
+needs .github/workflows/ci.yml deploy -> [test]
+needs .github/workflows/ci.yml lint -> []
+needs .github/workflows/ci.yml test -> [build]

@@ -54,7 +54,7 @@ func (l *loader) list(sub string, required bool) ([]string, error) {
 	if !fi.IsDir() {
 		return nil, &FileError{Path: sub, Err: errors.New("must be a real directory (not a symlink or file)")}
 	}
-	d, err := l.root.Open(sub)
+	d, err := l.root.OpenFile(sub, os.O_RDONLY|syscall.O_DIRECTORY|syscall.O_NONBLOCK, 0)
 	if err != nil {
 		return nil, &FileError{Path: sub, Err: err}
 	}
@@ -110,6 +110,7 @@ func (l *loader) read(name string) ([]byte, error) {
 		limit, totalBound = l.remaining, true
 	}
 	data, err := io.ReadAll(io.LimitReader(f, limit+1))
+	l.remaining -= int64(len(data)) // count what was really read, even on error or overrun
 	if err != nil {
 		return nil, &FileError{Path: name, Err: err}
 	}
@@ -119,7 +120,6 @@ func (l *loader) read(name string) ([]byte, error) {
 		}
 		return nil, &FileError{Path: name, Err: fmt.Errorf("file exceeds the %d byte limit", l.lim.MaxFileBytes)}
 	}
-	l.remaining -= int64(len(data))
 	return data, nil
 }
 
@@ -171,7 +171,9 @@ func Load(dir string, lim Limits) (*model.Dataset, error) {
 		r.File = n
 		k := pair{r.ID, r.Attempt}
 		if prev, dup := runs[k]; dup {
-			l.addErr(n, fmt.Errorf("duplicate run %d attempt %d, also in %s", r.ID, r.Attempt, prev.File))
+			if !l.addErr(n, fmt.Errorf("duplicate run %d attempt %d, also in %s", r.ID, r.Attempt, prev.File)) {
+				return nil, l.finish(nil)
+			}
 			continue
 		}
 		runs[k] = r
@@ -199,11 +201,15 @@ func Load(dir string, lim Limits) (*model.Dataset, error) {
 		}
 		k := pair{js[0].RunID, js[0].Attempt}
 		if prev, dup := jobFile[k]; dup {
-			l.addErr(n, fmt.Errorf("duplicate jobs for run %d attempt %d, also in %s", k.run, k.attempt, prev))
+			if !l.addErr(n, fmt.Errorf("duplicate jobs for run %d attempt %d, also in %s", k.run, k.attempt, prev)) {
+				return nil, l.finish(nil)
+			}
 			continue
 		}
 		if _, ok := runs[k]; !ok {
-			l.addErr(n, fmt.Errorf("no run file for run %d attempt %d", k.run, k.attempt))
+			if !l.addErr(n, fmt.Errorf("no run file for run %d attempt %d", k.run, k.attempt)) {
+				return nil, l.finish(nil)
+			}
 			continue
 		}
 		jobs[k], jobFile[k] = js, n

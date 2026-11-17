@@ -21,3 +21,7 @@
 - D14: Run keeps workflow_id; WorkflowKey falls back to path.
 - D15: Empty jobs response is an input error; no filename-based linkage.
 - D16: go.mod bumped 1.26.8 -> 1.26.9 (approved) for GO-2026-6604 (os.Root, Windows only, reachable via Root.OpenFile/Lstat). No module requirements added.
+- D17: Cross-review (phase 2) #1: jobs, steps and needs decoded as streams with limits applied per element. Agreed.
+- D18: #2: directories opened with O_DIRECTORY|O_NONBLOCK. Agreed; no replacement-race test (needs hooks).
+- D19: #3: bytes actually read are always deducted from the total budget. Partly agreed: a per-file overrun stays a collected error, not fatal; the total cap stops the load.
+- D20: #4: duplicate and unmatched-jobs branches honor MaxErrors. Agreed.

@@ -164,6 +164,31 @@ func TestLoadCaps(t *testing.T) {
 	})
 }
 
+func TestLoadOversizedFilesCountTowardTotal(t *testing.T) {
+	files := map[string]string{}
+	for i := 0; i < 20; i++ {
+		files[fmt.Sprintf("runs/%02d.json", i)] = strings.Repeat(" ", 100)
+	}
+	lim := DefaultLimits()
+	lim.MaxFileBytes, lim.MaxTotalBytes = 100-1, 250
+	_, err := Load(tree(t, files), lim)
+	checkErr(t, err, "total input exceeds")
+}
+
+func TestLoadDuplicateErrorsHonorCap(t *testing.T) {
+	files := map[string]string{}
+	for i := 0; i < 30; i++ {
+		files[fmt.Sprintf("runs/%02d.json", i)] = run1
+	}
+	lim := DefaultLimits()
+	lim.MaxErrors = 3
+	_, err := Load(tree(t, files), lim)
+	checkErr(t, err, "duplicate run")
+	if n := strings.Count(err.Error(), "duplicate run"); n != 3 {
+		t.Errorf("reported %d errors, want 3", n)
+	}
+}
+
 func TestLoadSymlinks(t *testing.T) {
 	outside := tree(t, map[string]string{"secret.json": run1})
 	dir := tree(t, map[string]string{"runs/real.json": run1})

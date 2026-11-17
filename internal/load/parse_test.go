@@ -1,6 +1,7 @@
 package load
 
 import (
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -73,14 +74,14 @@ func TestParseJobs(t *testing.T) {
 		{"null started", `{"jobs":[` + j(1, "a") + `]}`, "", 1},
 		{"empty array", `{"jobs":[]}`, "empty", 0},
 		{"missing jobs key", `{}`, "empty", 0},
-		{"too many jobs", `{"jobs":[` + strings.Join([]string{j(1, "a"), j(2, "b"), j(3, "c"), j(4, "d")}, ",") + `]}`, "exceeds", 0},
+		{"too many jobs", `{"jobs":[` + strings.Join([]string{j(1, "a"), j(2, "b"), j(3, "c"), j(4, "d")}, ",") + `]}`, "more than 3 jobs", 0},
 		{"duplicate names", `{"jobs":[` + j(1, "a") + `,` + j(2, "a") + `]}`, "duplicate job name", 0},
 		{"mixed run ids", `{"jobs":[` + j(1, "a") + `,{"id":2,"run_id":8,"run_attempt":1,"name":"b"}]}`, "differ", 0},
 		{"mixed attempts", `{"jobs":[` + j(1, "a") + `,{"id":2,"run_id":7,"run_attempt":2,"name":"b"}]}`, "differ", 0},
 		{"missing run id", `{"jobs":[{"id":1,"name":"a"}]}`, "required", 0},
 		{"too many steps", `{"jobs":[{"id":1,"run_id":7,"run_attempt":1,"name":"a","steps":[{},{},{}]}]}`, "steps", 0},
 		{"bad step time", `{"jobs":[{"id":1,"run_id":7,"run_attempt":1,"name":"a","steps":[{"started_at":"x"}]}]}`, "bad timestamp", 0},
-		{"jobs wrong type", `{"jobs":{}}`, "cannot unmarshal", 0},
+		{"jobs wrong type", `{"jobs":{}}`, "must be an array", 0},
 		{"truncated", `{"jobs":[{"id":1`, "unexpected EOF", 0},
 	}
 	for _, tc := range tests {
@@ -102,10 +103,10 @@ func TestParseNeeds(t *testing.T) {
 	}{
 		{"valid", `{"ci.yml":{"a":[],"b":["a"]}}`, ""},
 		{"empty object", `{}`, ""},
-		{"too many workflows", `{"a":{},"b":{}}`, "workflows"},
-		{"too many jobs", `{"a":{"x":[],"y":[],"z":[]}}`, "jobs exceeds"},
+		{"too many workflows", `{"a":{},"b":{}}`, "more than 1 workflows"},
+		{"too many jobs", `{"a":{"x":[],"y":[],"z":[]}}`, "more than 2 jobs"},
 		{"too many deps", `{"a":{"x":["1","2"],"y":["3","4"]}}`, "dependencies"},
-		{"wrong shape", `{"a":["x"]}`, "cannot unmarshal"},
+		{"wrong shape", `{"a":["x"]}`, "object of jobs"},
 		{"null", `null`, ""},
 	}
 	for _, tc := range tests {
@@ -125,5 +126,37 @@ func checkErr(t *testing.T, err error, want string) {
 		t.Fatalf("want error containing %q, got nil", want)
 	case want != "" && !strings.Contains(err.Error(), want):
 		t.Fatalf("error %q does not contain %q", err, want)
+	}
+}
+
+// allocated runs f and returns the bytes allocated while it ran.
+func allocated(f func()) uint64 {
+	var a, b runtime.MemStats
+	runtime.GC()
+	runtime.ReadMemStats(&a)
+	f()
+	runtime.ReadMemStats(&b)
+	return b.TotalAlloc - a.TotalAlloc
+}
+
+// A file full of tiny entries must be rejected by count before memory is spent on all of them.
+func TestParseLimitsBoundMemory(t *testing.T) {
+	lim := DefaultLimits()
+	lim.MaxSteps, lim.MaxNeedsDeps = 3, 3
+	const n = 1_000_000
+	steps := `{"jobs":[{"id":1,"run_id":7,"run_attempt":1,"name":"a","steps":[` + strings.Repeat("{},", n) + `{}]}]}`
+	deps := `{"w":{"j":[` + strings.Repeat(`"x",`, n) + `"x"]}}`
+	for name, tc := range map[string]func() error{
+		"steps": func() error { _, err := ParseJobs([]byte(steps), lim); return err },
+		"deps":  func() error { _, err := ParseNeeds([]byte(deps), lim); return err },
+	} {
+		var err error
+		got := allocated(func() { err = tc() })
+		if err == nil || !strings.Contains(err.Error(), "more than 3") {
+			t.Errorf("%s: err = %v", name, err)
+		}
+		if got > 32<<20 { // raw bytes are copied a few times; decoding all 1M entries costs 100+ MB
+			t.Errorf("%s: allocated %d bytes", name, got)
+		}
 	}
 }

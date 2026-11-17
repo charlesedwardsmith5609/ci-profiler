@@ -1,0 +1,15 @@
+{
+  "id": 104,
+  "name": "CI",
+  "workflow_id": 5001,
+  "path": ".github/workflows/ci.yml",
+  "run_number": 44,
+  "run_attempt": 1,
+  "event": "pull_request",
+  "status": "completed",
+  "conclusion": "success",
+  "head_sha": "00000000000000000000000000000000000c9119",
+  "created_at": "2026-11-03T09:00:00Z",
+  "run_started_at": "2026-11-03T09:00:00Z",
+  "updated_at": "2026-11-03T09:13:39Z"
+}

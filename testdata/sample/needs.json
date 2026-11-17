@@ -1,0 +1,12 @@
+{
+  ".github/workflows/ci.yml": {
+    "lint": [],
+    "build": [],
+    "test": [
+      "build"
+    ],
+    "deploy": [
+      "test"
+    ]
+  }
+}

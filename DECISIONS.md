@@ -14,3 +14,5 @@
 - D9: Cross-review #1: open files with O_NONBLOCK and require a regular file on the opened
   handle (FIFO hang). Agreed; Unix-only.
 - D10: Cross-review #2: duplicate job names in an attempt are an error. Agreed.
+- D11: Layout checked against a synthetic sample in testdata/sample (not real data). A real
+  capture is still needed to confirm field shapes.

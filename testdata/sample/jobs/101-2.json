@@ -1,0 +1,150 @@
+{
+  "total_count": 5,
+  "jobs": [
+    {
+      "id": 9005,
+      "run_id": 101,
+      "run_attempt": 2,
+      "name": "lint",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-02T09:14:00Z",
+      "started_at": "2026-11-02T09:14:12Z",
+      "completed_at": "2026-11-02T09:15:11Z",
+      "steps": [
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-02T09:14:12Z",
+          "completed_at": "2026-11-02T09:14:16Z"
+        },
+        {
+          "name": "golangci-lint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-02T09:14:16Z",
+          "completed_at": "2026-11-02T09:15:11Z"
+        }
+      ]
+    },
+    {
+      "id": 9006,
+      "run_id": 101,
+      "run_attempt": 2,
+      "name": "build (linux)",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-02T09:14:00Z",
+      "started_at": "2026-11-02T09:14:08Z",
+      "completed_at": "2026-11-02T09:16:32Z",
+      "steps": [
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-02T09:14:08Z",
+          "completed_at": "2026-11-02T09:14:12Z"
+        },
+        {
+          "name": "go build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-02T09:14:12Z",
+          "completed_at": "2026-11-02T09:16:32Z"
+        }
+      ]
+    },
+    {
+      "id": 9007,
+      "run_id": 101,
+      "run_attempt": 2,
+      "name": "build (macos)",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-02T09:14:00Z",
+      "started_at": "2026-11-02T09:15:35Z",
+      "completed_at": "2026-11-02T09:19:11Z",
+      "steps": [
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-02T09:15:35Z",
+          "completed_at": "2026-11-02T09:15:41Z"
+        },
+        {
+          "name": "go build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-02T09:15:41Z",
+          "completed_at": "2026-11-02T09:19:11Z"
+        }
+      ]
+    },
+    {
+      "id": 9008,
+      "run_id": 101,
+      "run_attempt": 2,
+      "name": "test",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-02T09:19:11Z",
+      "started_at": "2026-11-02T09:19:17Z",
+      "completed_at": "2026-11-02T09:24:11Z",
+      "steps": [
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-02T09:19:17Z",
+          "completed_at": "2026-11-02T09:19:21Z"
+        },
+        {
+          "name": "go test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-02T09:19:21Z",
+          "completed_at": "2026-11-02T09:24:11Z"
+        }
+      ]
+    },
+    {
+      "id": 9009,
+      "run_id": 101,
+      "run_attempt": 2,
+      "name": "deploy",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-02T09:24:11Z",
+      "started_at": "2026-11-02T09:24:16Z",
+      "completed_at": "2026-11-02T09:25:29Z",
+      "steps": [
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-02T09:24:16Z",
+          "completed_at": "2026-11-02T09:24:19Z"
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-02T09:24:19Z",
+          "completed_at": "2026-11-02T09:25:29Z"
+        }
+      ]
+    }
+  ]
+}

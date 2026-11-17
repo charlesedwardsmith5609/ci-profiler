@@ -25,3 +25,9 @@
 - D18: #2: directories opened with O_DIRECTORY|O_NONBLOCK. Agreed; no replacement-race test (needs hooks).
 - D19: #3: bytes actually read are always deducted from the total budget. Partly agreed: a per-file overrun stays a collected error, not fatal; the total cap stops the load.
 - D20: #4: duplicate and unmatched-jobs branches honor MaxErrors. Agreed.
+- D21: Checked duration arithmetic, 60-day single-duration validity bound. Plan review (step 3).
+- D22: Cap expanded needs edges (1,000,000 per run).
+- D23: Window = latest N distinct runs regardless of status; no backfill.
+- D24: Structured Result.Errors separate from unavailable reasons (cycle is an error, missing sidecar is not).
+- D25: Dominant step is path-relative, default 25% of critical path. Threshold is my choice; human may change.
+- D26: All-skipped runs excluded; zero denominators guarded.

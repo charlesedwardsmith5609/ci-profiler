@@ -1,0 +1,26 @@
+workflow id:5001 "CI" path=.github/workflows/ci.yml
+  window {Requested:50 Runs:4 Timed:3 Excluded:{Incomplete:0 Cancelled:1 NoJobs:0 NoRunJobs:0 BadTimestamps:0}}
+  run   [workflow run = max(job completed_at) - min(job started_at), skipped jobs ignored] n=3 p50=11m26s p95=13m31s total=36m18s
+  queue [workflow queue = min(job started_at) - run created_at] n=3 p50=8s p95=8s total=24s
+  job build (linux)  run n=3 p50=2m24s p95=2m24s total=7m12s | queue n=3 p50=8s p95=8s total=24s | share 0.1733
+  job build (macos)  run n=3 p50=3m36s p95=3m36s total=10m48s | queue n=3 p50=1m35s p95=1m35s total=4m45s | share 0.2599
+  job deploy         run n=3 p50=1m13s p95=1m13s total=3m39s | queue n=3 p50=5s p95=5s total=15s | share 0.0878
+  job lint           run n=3 p50=59s p95=59s total=2m57s | queue n=3 p50=12s p95=12s total=36s | share 0.0710
+  job test           run n=3 p50=4m59s p95=7m4s total=16m57s | queue n=3 p50=6s p95=6s total=18s | share 0.4079
+  critical path available=true jobs=[build (macos) test deploy] dur=11m53s runs=3 reason=""
+    on path build (macos): 3
+    on path deploy: 3
+    on path test: 3
+  step test / go test n=3 p50=4m55s p95=7m0s total=16m45s
+  step build (macos) / go build n=3 p50=3m30s p95=3m30s total=10m30s
+  step build (linux) / go build n=3 p50=2m20s p95=2m20s total=7m0s
+  step deploy / deploy n=3 p50=1m10s p95=1m10s total=3m30s
+  step lint / golangci-lint n=3 p50=55s p95=55s total=2m45s
+  step build (macos) / Checkout n=3 p50=6s p95=6s total=18s
+  step build (linux) / Checkout n=3 p50=4s p95=4s total=12s
+  step lint / Checkout n=3 p50=4s p95=4s total=12s
+  step test / Checkout n=3 p50=4s p95=4s total=12s
+  step deploy / Checkout n=3 p50=3s p95=3s total=9s
+  waste rerun=13m6s cancelled=12m8s discarded(info)=12m3s attempts=5
+  flag dominant-step build (macos) / go build: 3m30s is 29% of the 11m53s critical path (dominant step = step duration >= share of the latest run's critical path duration)
+  flag dominant-step test / go test: 7m0s is 59% of the 11m53s critical path (dominant step = step duration >= share of the latest run's critical path duration)
